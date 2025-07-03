@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class MainWindow(QMainWindow):
-    BASE_DIR = "/Users/s2408030/Desktop/Teaching/GUI/pics_bg/"
+    BASE_DIR = os.path.join(os.getcwd(), "pics_bg/")
 
     def __init__(self):
         super().__init__()
