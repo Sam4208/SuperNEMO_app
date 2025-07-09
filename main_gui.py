@@ -456,7 +456,7 @@ class MainWindow(QMainWindow):
 
         if same_side:
             filtered_df = filtered_df[filtered_df['s_status'] == 'Equal']
-            
+
         if different_side:
             filtered_df = filtered_df[filtered_df['s_status'] == 'Different']
 
@@ -471,7 +471,7 @@ class MainWindow(QMainWindow):
             ax1 = self.figure.add_subplot(111)
             ax1.hist(filtered_df['total_energy'], bins=50, color='blue', alpha=0.7)
             ax1.set_title("Summed Energy per Event")
-            ax1.set_xlabel("Total Energy")
+            ax1.set_xlabel("Total Energy (MeV)")
             ax1.set_ylabel("Frequency")
             self.canvas.draw()
             self.canvas.setVisible(True)
@@ -483,7 +483,7 @@ class MainWindow(QMainWindow):
             ax2 = self.figure_individual.add_subplot(111)
             ax2.hist(self.df_calo['energy'], bins=50, color='green', alpha=0.7)
             ax2.set_title("Summed Energy per Activated OM")
-            ax2.set_xlabel("Calo Energy")
+            ax2.set_xlabel("Calo Energy (MeV)")
             ax2.set_ylabel("Frequency")
             self.canvas_individual.draw()
             self.canvas_individual.setVisible(True)
@@ -498,7 +498,7 @@ class MainWindow(QMainWindow):
         ax3 = self.figure_calo_timing.add_subplot(111)
         ax3.hist(filtered_time_diff['time_diff'], bins=50,range=(0, 10), color='orange', alpha=0.7)
         ax3.set_title("Time Difference Between First and Last Calo Hit")
-        ax3.set_xlabel("Time Difference")
+        ax3.set_xlabel("Time Difference (ns)")
         ax3.set_ylabel("Frequency")
         self.canvas_calo_timing.draw()
         self.canvas_calo_timing.setVisible(True)
