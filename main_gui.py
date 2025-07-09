@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget, 
                              QPushButton, QLabel, QCheckBox, QTabWidget, 
-                             QHBoxLayout, QComboBox, QGridLayout)
+                             QHBoxLayout, QComboBox, QGridLayout, QSlider)
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt
 import matplotlib.pyplot as plt
@@ -23,7 +23,6 @@ class MainWindow(QMainWindow):
 
         self.main_layout = QVBoxLayout(self.central_widget)
 
-        # Top Tabs
         self.upper_tab = QTabWidget()
         self.data_type = QWidget()
         self.upper_tab.addTab(self.data_type, "Data Type")
@@ -34,7 +33,6 @@ class MainWindow(QMainWindow):
         self.top_tabs.addTab(self.selection_tab, "Selection Cuts")
         self.main_layout.addWidget(self.top_tabs)
 
-        # Bottom Tabs
         self.bottom_tabs = QTabWidget()
         self.real_events_tab = QWidget()
         self.analysis_plots_standard_tab = QWidget()
@@ -44,7 +42,6 @@ class MainWindow(QMainWindow):
         self.bottom_tabs.addTab(self.analysis_plots_advanced_tab, "Advanced")
         self.main_layout.addWidget(self.bottom_tabs)
 
-        # Data Type Tab Layout
         self.data_type_layout = QVBoxLayout(self.data_type)
         self.data_type_dropdown = QComboBox()
         self.data_type_dropdown.addItems(["Background", "Bismuth Source", "Neutron Source"])
@@ -52,18 +49,27 @@ class MainWindow(QMainWindow):
         self.data_type_layout.addWidget(QLabel("Select Data Type:"))
         self.data_type_layout.addWidget(self.data_type_dropdown)
 
-        # Selection Cuts Tab Layout
         self.selection_layout = QVBoxLayout(self.selection_tab)
+
+        # Inside the selection_layout setup
+        self.same_side_checkbox = QCheckBox("Tracks on Same Side")
+        self.same_side_checkbox.setChecked(False)
+        self.same_side_checkbox.stateChanged.connect(self.update_plot_visibility)
+        self.selection_layout.addWidget(self.same_side_checkbox)
+
+        self.different_side_checkbox = QCheckBox("Tracks on Different Side")
+        self.different_side_checkbox.setChecked(False)
+        self.different_side_checkbox.stateChanged.connect(self.update_plot_visibility)
+        self.selection_layout.addWidget(self.different_side_checkbox)
 
         # Energy Controls
         self.energy_min_label = QLabel("Min Energy: 0")
         self.energy_max_label = QLabel("Max Energy: 10")
-
         self.energy_min_up = QPushButton("+")
         self.energy_min_down = QPushButton("-")
         self.energy_max_up = QPushButton("+")
         self.energy_max_down = QPushButton("-")
-
+        
         self.energy_min_up.clicked.connect(self.increment_energy_min)
         self.energy_min_down.clicked.connect(self.decrement_energy_min)
         self.energy_max_up.clicked.connect(self.increment_energy_max)
@@ -81,12 +87,11 @@ class MainWindow(QMainWindow):
         # Vertex Controls
         self.vertex_min_label = QLabel("Min No. Tracks: 0")
         self.vertex_max_label = QLabel("Max No. Tracks: 5")
-
         self.vertex_min_up = QPushButton("+")
         self.vertex_min_down = QPushButton("-")
         self.vertex_max_up = QPushButton("+")
         self.vertex_max_down = QPushButton("-")
-
+        
         self.vertex_min_up.clicked.connect(self.increment_vertex_min)
         self.vertex_min_down.clicked.connect(self.decrement_vertex_min)
         self.vertex_max_up.clicked.connect(self.increment_vertex_max)
@@ -101,10 +106,44 @@ class MainWindow(QMainWindow):
         vertex_layout.addWidget(self.vertex_max_up)
         self.selection_layout.addLayout(vertex_layout)
 
-        # Real Events Tab Layout
+        # Calorimeter Hits Slider
+        # Remove the sliders
+        # self.calo_hits_slider_min = QSlider(Qt.Horizontal)
+        # self.calo_hits_slider_min.setRange(0, 50)
+        # self.calo_hits_slider_min.valueChanged.connect(self.update_calo_hits_min_label)
+
+        # self.calo_hits_slider_max = QSlider(Qt.Horizontal)
+        # self.calo_hits_slider_max.setRange(0, 50)
+        # self.calo_hits_slider_max.setValue(50)
+        # self.calo_hits_slider_max.valueChanged.connect(self.update_calo_hits_max_label)
+
+        # Add buttons for Calorimeter Hits
+        self.calo_hits_min_label = QLabel("Min Calo Hits: 0")
+        self.calo_hits_max_label = QLabel("Max Calo Hits: 15")
+        self.calo_hits_min_up = QPushButton("+")
+        self.calo_hits_min_down = QPushButton("-")
+        self.calo_hits_max_up = QPushButton("+")
+        self.calo_hits_max_down = QPushButton("-")
+
+        # Connect the buttons
+        self.calo_hits_min_up.clicked.connect(self.increment_calo_hits_min)
+        self.calo_hits_min_down.clicked.connect(self.decrement_calo_hits_min)
+        self.calo_hits_max_up.clicked.connect(self.increment_calo_hits_max)
+        self.calo_hits_max_down.clicked.connect(self.decrement_calo_hits_max)
+
+        calo_hits_layout = QHBoxLayout()
+        calo_hits_layout.addWidget(self.calo_hits_min_label)
+        calo_hits_layout.addWidget(self.calo_hits_min_down)
+        calo_hits_layout.addWidget(self.calo_hits_min_up)
+        calo_hits_layout.addWidget(self.calo_hits_max_label)
+        calo_hits_layout.addWidget(self.calo_hits_max_down)
+        calo_hits_layout.addWidget(self.calo_hits_max_up)
+        self.selection_layout.addLayout(calo_hits_layout)
+
+        
+
         self.real_events_layout = QVBoxLayout(self.real_events_tab)
         self.show_events_button = QPushButton("Show Events")
-        self.show_events_button.setStyleSheet("font-size: 50px;")
         self.show_events_button.setStyleSheet("color: black; background-color: orange;")
         self.show_events_button.clicked.connect(self.toggle_events_visibility)
         self.real_events_layout.addWidget(self.show_events_button)
@@ -126,16 +165,13 @@ class MainWindow(QMainWindow):
         self.event_number_label.setAlignment(Qt.AlignCenter)
         self.real_events_layout.addWidget(self.event_number_label)
 
-        # Hide event controls initially
         self.prev_button.setVisible(False)
         self.next_button.setVisible(False)
         self.image_label.setVisible(False)
         self.event_number_label.setVisible(False)
 
-        # Analysis Plots Tab Layout
         self.analysis_layout = QVBoxLayout(self.analysis_plots_standard_tab)
 
-        # Horizontal layout for checkboxes
         checkbox_layout = QHBoxLayout()
         self.total_energy_checkbox = QCheckBox("Show Total Energy")
         self.total_energy_checkbox.setChecked(True)
@@ -149,7 +185,6 @@ class MainWindow(QMainWindow):
         checkbox_layout.addWidget(self.individual_energy_checkbox)
         self.analysis_layout.addLayout(checkbox_layout)
 
-        # Grid layout for plots
         plot_grid_layout = QGridLayout()
         self.figure = plt.figure(figsize=(5, 5))
         self.canvas = FigureCanvas(self.figure)
@@ -169,7 +204,6 @@ class MainWindow(QMainWindow):
 
         self.analysis_layout.addLayout(plot_grid_layout)
 
-        # Initialize properties
         self.valid_event_indices = []
         self.event_index = 0
 
@@ -204,18 +238,18 @@ class MainWindow(QMainWindow):
             }
 
             QTabBar::tab {
-                background: #007ACC; /* Blue */
+                background: #007ACC;
                 color: black;
                 padding: 10px;
             }
             QTabBar::tab:selected {
-                background: #005999; /* Darker Blue */
+                background: #005999;
                 color: black;
             }
         """)
 
-        self.load_data()
-        self.update_plot_visibility()  # Set initial visibility
+        self.on_data_type_change()
+        self.update_plot_visibility()
         self.load_image()
 
     def toggle_events_visibility(self):
@@ -224,29 +258,37 @@ class MainWindow(QMainWindow):
         self.image_label.setVisible(True)
         self.event_number_label.setVisible(True)
         self.show_events_button.setVisible(False)
+        self.next_event()
 
     def on_data_type_change(self):
         selected_option = self.data_type_dropdown.currentText()
-        print(f"Selected data type: {selected_option}")
-        self.show_events_button.setVisible(True)
-        self.prev_button.setVisible(False)
-        self.next_button.setVisible(False)
-        self.image_label.setVisible(False)
-        self.event_number_label.setVisible(False)
+        
+        if selected_option == "Background":
+            database_path = "sq_SN_database_bg_big.db"
+        elif selected_option == "Bismuth Source":
+            database_path = "sq_SN_database_bismuth_big.db"
+        elif selected_option == "Neutron Source":
+            database_path = "sq_SN_database_neutron_big.db"
+        else:
+            database_path = "sq_SN_database_bg_big.db"  # Default option
+        
+        self.load_data(database_path)
+        self.update_plot_visibility()
+        print(f"Connected to {selected_option} database")
 
-    def load_data(self):
-        conn = sqlite3.connect("sq_SN_database_bg_big.db")
+    def load_data(self, database_path):
+        conn = sqlite3.connect(database_path)
+        
         try:
-            # Query to count the total number of tracks per event
+            # Queries here...
             track_query = """
             SELECT event_number,
-                COUNT(*) / 2 AS num_tracks
+                COUNT(*) AS num_tracks
             FROM tracks
             GROUP BY event_number
             """
             self.df_tracks = pd.read_sql_query(track_query, conn)
 
-            # Query to fetch calo_hits data
             calo_query = """
             SELECT event_number,
                 energy,
@@ -255,7 +297,6 @@ class MainWindow(QMainWindow):
             """
             self.df_calo = pd.read_sql_query(calo_query, conn)
 
-            # Query to calculate time difference for events with more than 2 tracks
             time_diff_query = """
             SELECT event_number,
                 MAX(calo_hit_time) - MIN(calo_hit_time) AS time_diff
@@ -263,18 +304,75 @@ class MainWindow(QMainWindow):
             WHERE event_number IN (
                 SELECT event_number
                 FROM tracks
+                WHERE event_number IN (
+                    SELECT event_number
+                    FROM calo_hits
+                    GROUP BY event_number
+                    HAVING COUNT(*) > 1
+                )
                 GROUP BY event_number
-                HAVING COUNT(*) / 2 > 2
+                HAVING COUNT(*) > 1
             )
             GROUP BY event_number
             """
             self.df_time_diff = pd.read_sql_query(time_diff_query, conn)
 
-            # Merge tracks and calo data to initialize self.df
+            calo_hits_query = """
+            SELECT event_number,
+                COUNT(*) AS num_calo_hits
+            FROM calo_hits
+            GROUP BY event_number
+            """
+            self.df_calo_hits = pd.read_sql_query(calo_hits_query, conn)
+
+            # Query to check if S is equal or different for all tracks
+            s_check_query = """
+            SELECT event_number,
+                CASE
+                    WHEN COUNT(DISTINCT S) = 1 THEN 'Equal'
+                    ELSE 'Different'
+                END AS s_status
+            FROM tracks
+            GROUP BY event_number
+            """
+            self.df_s_check = pd.read_sql_query(s_check_query, conn)
+
+            # Merge all dataframes
             self.df = pd.merge(self.df_tracks, self.df_calo.drop(columns='energy'), on="event_number", how="outer")
-            
+            self.df = pd.merge(self.df, self.df_calo_hits, on="event_number", how="outer")
+            self.df = pd.merge(self.df, self.df_s_check, on="event_number", how="outer")
+
         finally:
             conn.close()
+
+
+# Define increment and decrement methods
+    def increment_calo_hits_min(self):
+        min_hits = int(self.calo_hits_min_label.text().split()[-1])
+        min_hits += 1
+        self.calo_hits_min_label.setText(f"Min Calo Hits: {min_hits}")
+        self.update_plot_visibility()
+
+    def decrement_calo_hits_min(self):
+        min_hits = int(self.calo_hits_min_label.text().split()[-1])
+        if min_hits > 0:
+            min_hits -= 1
+        self.calo_hits_min_label.setText(f"Min Calo Hits: {min_hits}")
+        self.update_plot_visibility()
+
+    def increment_calo_hits_max(self):
+        max_hits = int(self.calo_hits_max_label.text().split()[-1])
+        max_hits += 1
+        self.calo_hits_max_label.setText(f"Max Calo Hits: {max_hits}")
+        self.update_plot_visibility()
+
+    def decrement_calo_hits_max(self):
+        max_hits = int(self.calo_hits_max_label.text().split()[-1])
+        if max_hits > 0:
+            max_hits -= 1
+        self.calo_hits_max_label.setText(f"Max Calo Hits: {max_hits}")
+        self.update_plot_visibility()
+
 
     def increment_energy_min(self):
         min_energy = int(self.energy_min_label.text().split()[-1])
@@ -328,52 +426,45 @@ class MainWindow(QMainWindow):
         self.vertex_max_label.setText(f"Max No. Tracks: {max_vertices}")
         self.update_plot_visibility()
 
+
+
+
     def update_plot_visibility(self):
         min_energy = int(self.energy_min_label.text().split()[-1])
         max_energy = int(self.energy_max_label.text().split()[-1])
         min_vertices = int(self.vertex_min_label.text().split()[-1])
         max_vertices = int(self.vertex_max_label.text().split()[-1])
+        min_calo_hits = int(self.calo_hits_min_label.text().split()[-1])
+        max_calo_hits = int(self.calo_hits_max_label.text().split()[-1])
+
+        # Check box filtering logic
+        same_side = self.same_side_checkbox.isChecked()
+        different_side = self.different_side_checkbox.isChecked()
 
         filtered_df = self.df[
             (self.df['total_energy'] >= min_energy) &
             (self.df['total_energy'] <= max_energy) &
-            (self.df['num_tracks'] >= min_vertices * 2) &
-            (self.df['num_tracks'] <= max_vertices * 2)
+            (self.df['num_tracks'] >= min_vertices) &
+            (self.df['num_tracks'] <= max_vertices) &
+            (self.df['num_calo_hits'] >= min_calo_hits) &
+            (self.df['num_calo_hits'] <= max_calo_hits)
         ]
 
         self.valid_event_indices = filtered_df['event_number'].tolist()
 
 
-        self.show_events_button.setVisible(True)
-        self.prev_button.setVisible(False)
-        self.next_button.setVisible(False)
-        self.image_label.setVisible(False)
-        self.event_number_label.setVisible(False)
 
-        
+        if same_side:
+            filtered_df = filtered_df[filtered_df['s_status'] == 'Equal']
+            
+        if different_side:
+            filtered_df = filtered_df[filtered_df['s_status'] == 'Different']
 
-        # Use the new button variables
-        min_energy = int(self.energy_min_label.text().split()[-1])
-        max_energy = int(self.energy_max_label.text().split()[-1])
-        min_vertices = int(self.vertex_min_label.text().split()[-1])
-        max_vertices = int(self.vertex_max_label.text().split()[-1])
-
-        filtered_df = self.df[
-            (self.df['total_energy'] >= min_energy) &
-            (self.df['total_energy'] <= max_energy) &
-            (self.df['num_tracks'] >= min_vertices * 2) &
-            (self.df['num_tracks'] <= max_vertices * 2)
-        ]
-
-        filtered_calo_df = self.df_calo[
-            self.df_calo['event_number'].isin(filtered_df['event_number'])
-        ]
-
-        filtered_time_diff = self.df_time_diff[
-            self.df_time_diff['event_number'].isin(filtered_df['event_number'])
-        ]
-
+     
         self.valid_event_indices = filtered_df['event_number'].tolist()
+
+
+
 
         if self.total_energy_checkbox.isChecked():
             self.figure.clear()
@@ -390,7 +481,7 @@ class MainWindow(QMainWindow):
         if self.individual_energy_checkbox.isChecked():
             self.figure_individual.clear()
             ax2 = self.figure_individual.add_subplot(111)
-            ax2.hist(filtered_calo_df['energy'], bins=50, color='green', alpha=0.7)
+            ax2.hist(self.df_calo['energy'], bins=50, color='green', alpha=0.7)
             ax2.set_title("Summed Energy per Activated OM")
             ax2.set_xlabel("Calo Energy")
             ax2.set_ylabel("Frequency")
@@ -399,10 +490,13 @@ class MainWindow(QMainWindow):
         else:
             self.canvas_individual.setVisible(False)
 
-        # New plot for time differences
+        filtered_time_diff = self.df_time_diff[
+            self.df_time_diff['event_number'].isin(filtered_df['event_number'])
+        ]
+
         self.figure_calo_timing.clear()
         ax3 = self.figure_calo_timing.add_subplot(111)
-        ax3.hist(filtered_time_diff['time_diff'], bins=50, color='orange', alpha=0.7)
+        ax3.hist(filtered_time_diff['time_diff'], bins=50,range=(0, 10), color='orange', alpha=0.7)
         ax3.set_title("Time Difference Between First and Last Calo Hit")
         ax3.set_xlabel("Time Difference")
         ax3.set_ylabel("Frequency")
@@ -413,10 +507,9 @@ class MainWindow(QMainWindow):
         if self.valid_event_indices:
             try:
                 event_number = self.valid_event_indices[self.event_index]
-                image_path = os.path.join(self.BASE_DIR, f"1295_{int(event_number+1)}.png")
+                image_path = os.path.join(self.BASE_DIR, f"1295_{int(event_number)}.png")
                 if os.path.exists(image_path):
                     original_pixmap = QPixmap(image_path)
-                    # Remove scaling to keep the original size, or adjust as needed
                     self.image_label.setPixmap(original_pixmap)
                 else:
                     self.image_label.setText("Image not found")
@@ -433,8 +526,6 @@ class MainWindow(QMainWindow):
             self.image_label.setText("No valid images")
             self.event_number_label.setText("")
 
-
-
     def next_event(self):
         if self.valid_event_indices and self.event_index < len(self.valid_event_indices) - 1:
             self.event_index += 1
@@ -444,7 +535,6 @@ class MainWindow(QMainWindow):
         if self.valid_event_indices and self.event_index > 0:
             self.event_index -= 1
             self.load_image()
-
 
 app = QApplication(sys.argv)
 window = MainWindow()
